@@ -89,6 +89,14 @@ Many \textit{producers} can send messages that go to one queue, and many \textit
 
 \textit{Consuming} is the same as receiving. A \textit{consumer} is a program that mostly waits to receive messages.
 
+\subsubsection{Message Acknowledgement}
+
+\textit{Message Acknowledgement} lets us signal to the RabbitMQ server that a consumer has received and processed a given message. If RabbitMQ doesn't receive an acknowledgement, it means the consumer that was processing the node died or became disconnected, at which point the message is requeued and taken up by another worker.
+
+\subsubsection{Message Durability}
+
+\textit{Message Durability} ensures that the messages that are in the RabbitMQ server queue are not lost when the server goes offline. To ensure messages can survive server shutdowns, we need to make sure the queue they are sent to are durable and the message itself is durable, which is done via flags as shown in section \textit{2.2 Work Queues}
+
 \section{Tutorials}
 
 \subsection{Hello World!}
@@ -108,7 +116,207 @@ The overall design will look like:
     \label{t1-1}
 \end{figure}
 
+\subsubsection{Producer}
+
+The first thing we need to do when we are creating a sender is understand where we are sending the message to. For this example, we use \verb|localhost|, and we connect with:
+
+\begin{verbatim}
+    o_ConnectionParameters = pika.connectionParameters('localhost')
+    o_Connection = pika.BlockingConnection(o_ConnectionParameters)
+\end{verbatim}
+
+We create a \verb|BlockingConnection| to ensure the rest of the program doesn't continue until we have successfully connected to the target specified by \verb|o_ConnectionParameters|.
+
+Once \verb|o_Connection| has been successfully created, we need to open a channel on the connection, which we do with:
+
+\begin{verbatim}
+    o_Channel = o_Connection.channel()
+\end{verbatim}
+
+Now that the communication channel is created, we need to declare a queue to which the message will be published. As shown in the diagram above, we name the queue "hello":
+
+\begin{verbatim}
+    o_Channel.queue_declare("hello")
+\end{verbatim}
+
+Once the queue has been successfully declared, we can finally send a message! To send a message, we do:
+
+\begin{verbatim}
+    o_Channel.basic_publish(
+        exchange    = '',
+        routing_key = 'hello',
+        body        = 'Hello, World!"
+    )
+\end{verbatim}
+
+From this, we can see that \verb|o_Channel.basic_publish| has 3 parameters that we are using here:
+
+\begin{itemize}
+    \item \verb|exchange|: All messages need to go through an exchange before entering the queue. This is discussed more in tutorial 3
+    \item \verb|routing_key|: Specifies the queue name
+    \item \verb|body|: Contains the body of the message being sent.
+\end{itemize}
+
+After we have sent the message, we close the connection to be thorough, which can be done with:
+
+\begin{verbatim}
+    o_Connection.close()
+\end{verbatim}
+
+We need to ensure that RabbitMQ is running, for which we just use the pre-built Docker image:
+
+\begin{verbatim}
+    docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.10-management
+\end{verbatim}
+
+Once this is up and running, we run the program to send the message, which pushes it into the queue.
+
+\subsubsection{Consumer}
+
+Here, like we did with the producer, we create a connection to localhost using the same code.
+
+Once the connection is created, we connect to the same queue with the same code used before. Although the previous time running the \verb|queue_declare| code created the queue, running it again will not create a new one, but connect to the existing one.
+
+Beyond these similarities, creating a consumer is more involved than creating a publisher. 
+
+The first step to creating a consumer is defining a function that will handle message receives:
+
+\begin{verbatim}
+    def callback(ch, method, properties, body):
+        print(f"[<----] Received {body}")
+\end{verbatim}
+
+Once we define the function, we need to attach it to the queue, which we do with:
+
+\begin{verbatim}
+    o_Channel.basic_consume(
+        queue='hello',
+        auto_ack=True,
+        on_message_callback=callback
+    )
+\end{verbatim}
+
+This function is provided the following values:
+
+\begin{itemize}
+    \item \verb|queue|: Defines the queue to attach to
+    \item \verb|auto_ack|: Explained later
+    \item \verb|on_message_callback|: Attaches callback function to queue
+\end{itemize}
+
+Once we have told the queue what how to consume messages, we need to tell it to start consuming:
+
+\begin{verbatim}
+    o_Channel.start_consuming()
+\end{verbatim}
+
+For good measure, we wrap the code in a \verb|KeyboardInterrupt| clause to allow for graceful shutdown, as shown in the source code.
+
+\subsection{Work Queues}
+
+\subsubsection{Introduction}
+
+The motivation for task queues is to allow us to avoid doing a resource-intensive task immediately and having to wait for it to complete. Instead, we schedule the task to be done later.
+
+To schedule the task, we first need to encapsulate it into a message and send it to the queue, and eventually a worker process in the background will pop messages off the queue and execute the job. When there are multiple running workers, the task is split between them.
+
+This concept is especially useful in applications like web apps, where it's impossible to handle a complex task in the short HTTP request window.
+
+In tutorial 1, we sent a simple message containing \textit{Hello, World!} to the queue. In this tutorial, we will be sending strings that represent tasks. 
+
+When we send a message from our producer, it will be placed in the queue where it remains until consumed by the consumer, at which point \verb|time.sleep()| is triggered to simulate a resource heavy task, with the sleep time determined by the number of dots at the end of the message.
+
+One advantage of using task queues is \textbf{round robin dispatching}. This is a process by which we parallelize work loads. If we have a backlog of work, we can add more consumer replicas to tackle the backlog.
+
+Note that round robin dispatching does not assign tasks by the current workload a worker is given, instead just always assigning backlogged tasks to the next node. This means that when if we have two nodes, A and B, and node A is executing a large task, if two small tasks will come in, one will be sent to B and the other sent to A. This isn't ideal, since we would prefer if the non-working node B, handles the two small tasks while A is still working on the large task.
+
+\subsubsection{Producer}
+
+This program will allow us to read the commandline to send messages, so we add the following line of code to define our message:
+
+\begin{verbatim}
+    s_Message = ' '.join(sys.argv[1:]) or "Default Message"
+\end{verbatim}
+
+We also need to define a function to initialize the channel, which is done the same way as in tutorial 1:
+
+\begin{verbatim}
+    def openChannel(s_Host='localhost'):
+        # Open Connection Channel
+        o_ConnectionParameters = pika.ConnectionParameters(s_Host)
+        o_Connection    = pika.BlockingConnection(o_ConnectionParameters)
+        o_Channel       = o_Connection.channel()
+        return o_Channel
+\end{verbatim}
+
+We create another queue to communicate our messages to, and send the message:
+
+\begin{verbatim}
+    # Declare message queue
+    o_Channel.queue_declare(queue='tutorial_2')
+    # Send the message
+    o_Channel.basic_publish(
+        exchange='',
+        routing_key='tutorial_2',
+        body=s_Message)
+\end{verbatim}
+
+\subsubsection{Consumer}
+
+The consumer here is largely the same as the consumer outlined in tutorial 1. In the source code, the major differences are just from refactoring and the new consumer callback function:
+
+\begin{verbatim}
+    def callback(ch, method, properties, body):
+        print(f"[<----] Received {str(body)}")
+        time.sleep(body.count(b'.'))
+        print("[X] Done")
+        ch.basic_ack(delivery_tag = method.delivery_tag)
+\end{verbatim}
+
+\subsubsection{Message Acknowledgement}
+
+The new \verb|ch.basic_ack| line is used to send message acknowledgements back to the RabbitMQ server. As explained in the \textit{Dictionary} section, \textit{message acknowledgements} ensure if the consumer currently working on a message disconnects, the message will be requeued by the server and taken up by another consumer.
+
+\subsubsection{Message Durability}
+
+We want to make sure our messages are durable, that is, that they will survive the RabbitMQ server going offline. To do this, we need to change the \verb|o_Channel.queue_declare(queue='tutorial_2')| and \verb|o_Channel.basic_publish(exchange='',routing_key='tutorial_2',body=s_Message)| to:
+
+In both consumer and producer files:
+
+\begin{verbatim}
+    o_Channel.queue_declare(queue='task_queue', durable=True)
+    
+    o_Channel.basic_consume(
+        queue                   = 'task_queue',
+        on_message_callback     = callback
+    )
+\end{verbatim}
 
 
+In just the producer file:
+
+\begin{verbatim}
+    o_Channel.basic_publish(exchange='',
+        routing_key="task_queue",
+        body=s_Message,
+        properties=pika.BasicProperties(
+            delivery_mode = pika.spec.PERSISTENT_DELIVERY_MODE
+        )
+    )
+\end{verbatim}
+
+\subsubsection{Fair Dispatch}
+
+Like mentioned earlier, round robin dispatching doesn't allow for fair distribution across nodes. We can specify fair dispatching by adding the following property to our \verb|o_Channel| in our consumer file.
+
+\begin{verbatim}
+    o_Channel.basic_qos(prefetch_count=1)
+\end{verbatim}
+
+This tells RabbitMQ not to give more than 1 message to a worker at a time. This ensures that if a worker is still processing a task, check if there are empty workers that can take the backlogged task instead.
+
+\subsubsection{Conclusion}
+
+Here we have shown how we can use RabbitMQ to define task queues to allow for load balancing across worker nodes for resource heavy tasks, as well as how to ensure that our messages are durable and there are contingencies in place to resolve the message in case a worker or RabbitMQ server dies unexpectedly.
 
 \end{document}
