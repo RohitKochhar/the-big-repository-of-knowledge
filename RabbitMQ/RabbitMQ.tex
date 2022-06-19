@@ -108,7 +108,100 @@ The overall design will look like:
     \label{t1-1}
 \end{figure}
 
+\subsubsection{Producer}
 
+The first thing we need to do when we are creating a sender is understand where we are sending the message to. For this example, we use \verb|localhost|, and we connect with:
 
+\begin{verbatim}
+    o_ConnectionParameters = pika.connectionParameters('localhost')
+    o_Connection = pika.BlockingConnection(o_ConnectionParameters)
+\end{verbatim}
+
+We create a \verb|BlockingConnection| to ensure the rest of the program doesn't continue until we have successfully connected to the target specified by \verb|o_ConnectionParameters|.
+
+Once \verb|o_Connection| has been successfully created, we need to open a channel on the connection, which we do with:
+
+\begin{verbatim}
+    o_Channel = o_Connection.channel()
+\end{verbatim}
+
+Now that the communication channel is created, we need to declare a queue to which the message will be published. As shown in the diagram above, we name the queue "hello":
+
+\begin{verbatim}
+    o_Channel.queue_declare("hello")
+\end{verbatim}
+
+Once the queue has been successfully declared, we can finally send a message! To send a message, we do:
+
+\begin{verbatim}
+    o_Channel.basic_publish(
+        exchange    = '',
+        routing_key = 'hello',
+        body        = 'Hello, World!"
+    )
+\end{verbatim}
+
+From this, we can see that \verb|o_Channel.basic_publish| has 3 parameters that we are using here:
+
+\begin{itemize}
+    \item \verb|exchange|: All messages need to go through an exchange before entering the queue. This is discussed more in tutorial 3
+    \item \verb|routing_key|: Specifies the queue name
+    \item \verb|body|: Contains the body of the message being sent.
+\end{itemize}
+
+After we have sent the message, we close the connection to be thorough, which can be done with:
+
+\begin{verbatim}
+    o_Connection.close()
+\end{verbatim}
+
+We need to ensure that RabbitMQ is running, for which we just use the pre-built Docker image:
+
+\begin{verbatim}
+    docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.10-management
+\end{verbatim}
+
+Once this is up and running, we run the program to send the message, which pushes it into the queue.
+
+\subsubsection{Consumer}
+
+Here, like we did with the producer, we create a connection to localhost using the same code.
+
+Once the connection is created, we connect to the same queue with the same code used before. Although the previous time running the \verb|queue_declare| code created the queue, running it again will not create a new one, but connect to the existing one.
+
+Beyond these similarities, creating a consumer is more involved than creating a publisher. 
+
+The first step to creating a consumer is defining a function that will handle message receives:
+
+\begin{verbatim}
+    def callback(ch, method, properties, body):
+        print(f"[<----] Received {body}")
+\end{verbatim}
+
+Once we define the function, we need to attach it to the queue, which we do with:
+
+\begin{verbatim}
+    o_Channel.basic_consume(
+        queue='hello',
+        auto_ack=True,
+        on_message_callback=callback
+    )
+\end{verbatim}
+
+This function is provided the following values:
+
+\begin{itemize}
+    \item \verb|queue|: Defines the queue to attach to
+    \item \verb|auto_ack|: Explained later
+    \item \verb|on_message_callback|: Attaches callback function to queue
+\end{itemize}
+
+Once we have told the queue what how to consume messages, we need to tell it to start consuming:
+
+\begin{verbatim}
+    o_Channel.start_consuming()
+\end{verbatim}
+
+For good measure, we wrap the code in a \verb|KeyboardInterrupt| clause to allow for graceful shutdown, as shown in the source code.
 
 \end{document}
