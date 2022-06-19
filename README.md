@@ -15,3 +15,6 @@ Notes are in `RabbitMQ/RabbitMQ.tex`
 #### Tutorials
 1. Hello, World!
     - The simplest thing that does something
+2. Task Queue
+    - Creating a task queue for task load balancing via messaging
+    - Exploring queue and message acknowledgement and durability to ensure tasks are completed and handled correctly.
