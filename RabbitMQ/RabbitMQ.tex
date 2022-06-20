@@ -212,7 +212,9 @@ Once we have told the queue what how to consume messages, we need to tell it to 
 
 For good measure, we wrap the code in a \verb|KeyboardInterrupt| clause to allow for graceful shutdown, as shown in the source code.
 
-\subsection{Work Queues}
+\subsection{Task / Work Queues}
+
+\textit{Source code located at}: \verb|the-big-repository-of-knowledge/RabbitMQ/tutorials/task_queue/|
 
 \subsubsection{Introduction}
 
@@ -318,5 +320,9 @@ This tells RabbitMQ not to give more than 1 message to a worker at a time. This 
 \subsubsection{Conclusion}
 
 Here we have shown how we can use RabbitMQ to define task queues to allow for load balancing across worker nodes for resource heavy tasks, as well as how to ensure that our messages are durable and there are contingencies in place to resolve the message in case a worker or RabbitMQ server dies unexpectedly.
+
+\subsection{Publish/Subscribe}
+
+\textit{Source code located at}: \verb|the-big-repository-of-knowledge/RabbitMQ/tutorials/pub_sub/|
 
 \end{document}
