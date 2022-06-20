@@ -18,7 +18,8 @@ import pika
 # Class Declarations ---------------------------------------------
 class RabidsMQ:
     def __init__(self, s_Host='localhost') -> None:
-        self.s_Host = s_Host
+        self.i_ReceivedCount    = 0    
+        self.s_Host             = s_Host
 
     # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
     #
@@ -47,7 +48,7 @@ class RabidsMQ:
     #		- 2022-06-19: Created by Rohit S.
     #
     # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
-    def basicPublish(self, s_Exchange, s_RoutingKey, s_Body):
+    def basicPublish(self, s_Exchange, s_RoutingKey, s_Body, properties=pika.BasicProperties()):
         self.o_Channel.basic_publish(
             exchange        = s_Exchange,
             routing_key     = s_RoutingKey,
@@ -71,8 +72,9 @@ class RabidsMQ:
     # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
     def basicConsume(self, s_Queue, F_Callback, b_AutoAck=False):        
         def callbackWrapper(ch, method, properties, body):
-            print(f"[>>> GOT] Received {body} to {s_Queue}")
+            print(f"[>>> GOT]\n\tBody: {body.decode('UTF-8')}\n\tQueue: {s_Queue}\n\tReceived count: {self.i_ReceivedCount}")
             F_Callback(ch, method, properties, body)
+            self.i_ReceivedCount += 1
 
         self.o_Channel.basic_consume(
             queue               = s_Queue,
