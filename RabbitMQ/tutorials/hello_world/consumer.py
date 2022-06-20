@@ -10,6 +10,7 @@
 
 # Imports --------------------------------------------------------
 import sys, os
+sys.path.append('../')
 from RabidsMQ import RabidsMQ
 
 # Global Variables -----------------------------------------------

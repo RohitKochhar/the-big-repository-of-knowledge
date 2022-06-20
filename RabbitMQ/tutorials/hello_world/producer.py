@@ -9,6 +9,9 @@
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 
 # Imports --------------------------------------------------------
+# Need sys to import RabidsMQ
+import sys
+sys.path.append('../')
 from RabidsMQ import RabidsMQ 
 
 # Global Variables -----------------------------------------------

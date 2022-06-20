@@ -55,9 +55,9 @@ class RabidsMQ:
         )
 
         if s_Exchange == '':
-            print(f'[------>] Sent message "{s_Body}" to queue: {s_RoutingKey}')
+            print(f'[SENT >>>] Sent message "{s_Body}" to queue: {s_RoutingKey}')
         else:
-            print(f'[------>] Sent message "{s_Body}" to queue: {s_RoutingKey} via {s_Exchange}')
+            print(f'[SENT >>>] Sent message "{s_Body}" to queue: {s_RoutingKey} via {s_Exchange}')
 
     # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
     #
@@ -71,7 +71,7 @@ class RabidsMQ:
     # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
     def basicConsume(self, s_Queue, F_Callback, b_AutoAck=False):        
         def callbackWrapper(ch, method, properties, body):
-            print(f"[<-------] Received {body} to {s_Queue}")
+            print(f"[>>> GOT] Received {body} to {s_Queue}")
             F_Callback(ch, method, properties, body)
 
         self.o_Channel.basic_consume(
