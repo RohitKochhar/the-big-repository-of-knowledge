@@ -9,7 +9,7 @@
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 
 # Imports --------------------------------------------------------
-import pika
+from RabidsMQ import RabidsMQ 
 
 # Global Variables -----------------------------------------------
 
@@ -20,18 +20,12 @@ import pika
 # Main Call ------------------------------------------------------
 if __name__ == '__main__':
     # Open Connection Channel
-    o_ConnectionParameters = pika.ConnectionParameters('localhost')
-    o_Connection    = pika.BlockingConnection(o_ConnectionParameters)
-    o_Channel       = o_Connection.channel()
-    # Declare message queue "hello"
-    o_Channel.queue_declare(queue='hello')
-    # Send the message
-    o_Channel.basic_publish(
-        exchange='',
-        routing_key='hello',
-        body='Hello World!'
+    o_RabidsMQ      = RabidsMQ(s_Host='localhost')
+    o_RabidsMQ.openChannel()
+    o_RabidsMQ.o_Channel.queue_declare(queue='hello')
+    o_RabidsMQ.basicPublish(
+        s_Exchange      = "",
+        s_RoutingKey    = "hello",
+        s_Body          = "Hello, World!"
     )
-    # Indicate that we sent the message
-    print("[---->] Sent message 'Hello World!'")
-    # Close the connection
-    o_Connection.close()
+    o_RabidsMQ.o_Channel.close()

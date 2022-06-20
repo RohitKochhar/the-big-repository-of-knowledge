@@ -9,7 +9,8 @@
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 
 # Imports --------------------------------------------------------
-import pika, sys, os
+import sys, os
+from RabidsMQ import RabidsMQ
 
 # Global Variables -----------------------------------------------
 
@@ -32,43 +33,24 @@ import pika, sys, os
 #
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 def main():
-    # Create connection
-    o_ConnectionParamers = pika.ConnectionParameters('localhost')
-    o_Connection = pika.BlockingConnection(o_ConnectionParamers)
-    o_Channel = o_Connection.channel()
-    # Declare the queue again
-    o_Channel.queue_declare('hello')
-    # Attach callback
-    o_Channel.basic_consume(
-        queue                   = 'hello',
-        auto_ack                = True,
-        on_message_callback     = callback
+    # Create RabidsMQ instance
+    o_RabidsMQ      = RabidsMQ(s_Host='localhost')
+    # Open connection
+    o_RabidsMQ.openChannel()
+    # Declare queue
+    o_RabidsMQ.o_Channel.queue_declare('hello')
+    # Define consumption
+    o_RabidsMQ.basicConsume(
+        s_Queue         = 'hello',
+        F_Callback      = lambda ch, method, properties, body: None,
+        b_AutoAck       = True
     )
+
     print("Waiting for messages...")
     # Start consuming
-    o_Channel.start_consuming()
+    o_RabidsMQ.o_Channel.start_consuming()
 
-# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
-#
-#	Function Name: callback
-#
-#	Function Description: Lets queue what to know when a message
-#                           comes in
-#
-#	Function Inputs:
-#           - ch:           BlockingChannel item used to create connection
-#           - method:       Item declaring how message was sent
-#           - properties:   Item containing properties of message
-#           - body:         Binary string containing sent message
-#
-#	Function Outputs:
-#
-#	Function History:
-#		- 2022-06-18: Created by Rohit S.
-#
-# . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
-def callback(ch, method, properties, body):
-    print(f"[<----] Received {str(body)} at {properties}")
+
 
 # Main Call ------------------------------------------------------
 if __name__ == '__main__':
