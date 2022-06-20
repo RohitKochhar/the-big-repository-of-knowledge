@@ -38,11 +38,12 @@ from RabidsMQ import RabidsMQ
 #		- 2022-06-19: Created by Rohit S.
 #
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
-def callback(ch, method, properties, body):
+def callback(ch, method, properties, data):
+    body = data["s_Body"]
     t_StartTime = time.time()
-    time.sleep(body.count(b'.'))
+    time.sleep(body.count('.'))
     t_EndTime   = time.time()
-    print(f"[COMPLETED]\n\tTask: {body.decode('UTF-8').split('.')[0]}\n\tCompletion Time: {t_EndTime-t_StartTime}\n")
+    print(f"[COMPLETED]\n\tTask: {body.split('.')[0]}\n\tCompletion Time: {round(t_EndTime-t_StartTime, 3)}\n")
     ch.basic_ack(delivery_tag = method.delivery_tag)
 
 # Main Call ------------------------------------------------------

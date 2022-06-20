@@ -11,7 +11,7 @@
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 
 # Imports --------------------------------------------------------
-import pika
+import pika, json, time
 
 # Global Variables -----------------------------------------------
 
@@ -52,7 +52,7 @@ class RabidsMQ:
         self.o_Channel.basic_publish(
             exchange        = s_Exchange,
             routing_key     = s_RoutingKey,
-            body            = s_Body
+            body            = self.packData(s_Body, s_RoutingKey)
         )
 
         if s_Exchange == '':
@@ -72,8 +72,9 @@ class RabidsMQ:
     # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
     def basicConsume(self, s_Queue, F_Callback, b_AutoAck=False):        
         def callbackWrapper(ch, method, properties, body):
-            print(f"[>>> GOT]\n\tBody: {body.decode('UTF-8')}\n\tQueue: {s_Queue}\n\tReceived count: {self.i_ReceivedCount}")
-            F_Callback(ch, method, properties, body)
+            d_Packet = self.unpackData(body)
+            print(f"[>>> GOT]\n\tBody: {d_Packet['s_Body']}\n\tQueue: {d_Packet['s_Queue']}\n\tResolution Time: {round(time.time() - int(d_Packet['t_Sent']), 3)} seconds\n\tReceived Packets at this worker: {self.i_ReceivedCount}")
+            F_Callback(ch, method, properties, d_Packet)
             self.i_ReceivedCount += 1
 
         self.o_Channel.basic_consume(
@@ -81,3 +82,36 @@ class RabidsMQ:
             auto_ack            = b_AutoAck,
             on_message_callback = callbackWrapper,
         )
+
+    # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+    #
+    #	Function Name:          packData
+    #
+    #	Function Description:   Takes a payload and converts to JSON
+    #                           with some metadata, flattens to string
+    #
+    #	Function History:
+    #		- 2022-06-19: Created by Rohit S.
+    #
+    # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+    def packData(self, s_Body, s_RoutingKey):
+        d_Packet = {
+            "s_Body":       s_Body,
+            "s_Queue":      s_RoutingKey,
+            "t_Sent":       time.time(),
+        }
+
+        return json.dumps(d_Packet)
+
+    # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+    #
+    #	Function Name:          unpackData
+    #
+    #	Function Description:   Reverses the string from packData
+    #
+    #	Function History:
+    #		- 2022-06-19: Created by Rohit S.
+    #
+    # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+    def unpackData(self, s_JsonObject):
+        return json.loads(s_JsonObject.decode('UTF-8'))
