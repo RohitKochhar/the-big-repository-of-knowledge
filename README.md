@@ -12,6 +12,10 @@ The goal here is to learn 1 new tool per week.
 
 Notes are in `RabbitMQ/RabbitMQ.tex`
 
+#### RabidsMQ
+
+RabidsMQ is a RabbitMQ wrapper that I wrote to prevent the reusage of boilerplate code often needed in the setup of RabbitMQ clients. Additionally, it allows for the transmission of header packets containing metadata about packet data and more.
+
 #### Tutorials
 1. Hello, World!
     - The simplest thing that does something
