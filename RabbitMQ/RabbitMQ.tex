@@ -97,7 +97,17 @@ Many \textit{producers} can send messages that go to one queue, and many \textit
 
 \textit{Message Durability} ensures that the messages that are in the RabbitMQ server queue are not lost when the server goes offline. To ensure messages can survive server shutdowns, we need to make sure the queue they are sent to are durable and the message itself is durable, which is done via flags as shown in section \textit{2.2 Work Queues}
 
+\subsubsection{Exchanges}
+
+\textit{Exchanges} are exactly what they sound like, a construct that takes messages and exchanges it to the queue. In reality, clients don't publish directly to queues, instead they hand the message to an exchange, which knows exactly what to do with the message based on a set of rules defined in the \textit{exchange type}
+
 \section{Tutorials}
+
+\subsection{Note on RabidsMQ}
+
+After the 2nd tutorial, I realized the amount of reused code and saw the need for a resuable class to make life more easy. Because of this, a lot of the code talked about in the first two tutorials have been refactored and placed in the \verb|RabidsMQ| class located \verb|RabbitMQ/RabidsMQ.py|.
+
+This class is just a simple manager for RabbitMQ clients, and the explanations behind the code in the first two tutorials still applies, only located in a different file.
 
 \subsection{Hello World!}
 
@@ -323,6 +333,88 @@ Here we have shown how we can use RabbitMQ to define task queues to allow for lo
 
 \subsection{Publish/Subscribe}
 
-\textit{Source code located at}: \verb|the-big-repository-of-knowledge/RabbitMQ/tutorials/pub_sub/|
+\textit{Source code located at}: \verb|the-big-repository-of-knowledge/RabbitMQ/tutorials/publish_subscribe/|
+
+\subsubsection{Introduction}
+
+When we discussed work queues, we were operating under the assumption that every task is only being distributed to a single consumer. What if we wanted to deliver messages to multiple consumers? That is what we will do now.
+
+We are going to create two programs, \verb|log_emitter.py| and \verb|log_consumer.py|. The former will create logs and the latter will consume and print them.
+
+In previous tutorials, we used empty exchanges which allowed producers to queues, which we don't want. Instead, we want producers to send messages to an \textbf{exchange}. 
+
+From dictionary:
+
+\textit{Exchanges} are exactly what they sound like, a construct that takes messages and exchanges it to the queue. In reality, clients don't publish directly to queues, instead they hand the message to an exchange, which knows exactly what to do with the message based on a set of rules defined in the \textit{exchange type}
+
+Although there are many types of exchanges, we are going to use \verb|fanout|. 
+
+\subsubsection{Log Emitter}
+
+To get started, we add the following to \verb|log_emitter.py|
+
+\begin{verbatim}
+    # Define RabidsMQ instance
+    o_Rabids = RabidsMQ(s_Host='localhost')
+    # Open channel
+    o_Rabids.openChannel()
+    # Declare the exchange
+    o_Rabids.o_Channel.exchange_declare(
+        exchange='logs',
+        exchange_type='fanout'
+    )
+\end{verbatim}
+
+The main difference between this and the rest of the tutorials is that we now invoke the \verb|.exchange_declare()| to specify where to send the messages and what type of exchange to use.
+
+We wrap up the \verb|log_emitter.py| the same way we wrapper up our other \verb|producers|
+
+\begin{verbatim}
+    # Create message
+    s_Message = ' '.join(sys.argv[1:]) or "Default Log"
+    # Publish to the exchange
+    o_Rabids.basicPublish(
+        s_Exchange      = 'logs',
+        s_RoutingKey    = '',
+        s_Body          = s_Message
+    )
+    # Close the queue
+    o_Rabids.o_Channel.close()
+\end{verbatim}
+
+It is worth noting that now we do not specify the \verb|s_RoutingKey|, since the producer doesn't know what queue the message is going to, instead it only knows that it is going to the exchange that we declared in the channel.
+
+\subsubsection{Log Consumer}
+
+Rather than telling our consumer to listen to a specific queue as we have done before, we are now using \textbf{temporary queues}. This is because we want our consumer to listen to all log messages, not just a subset of them. To ensure this, we create our consumer as follows:
+
+\begin{verbatim}
+    # Define Rabids MQ instance
+    o_Rabids = RabidsMQ(s_Host='localhost')
+    # Open channel 
+    o_Rabids.openChannel()
+    # Declare exchange
+    o_Rabids.o_Channel.exchange_declare(exchange='logs', exchange_type='fanout')
+    # Store the resulting queue name
+    s_QueueName = o_Rabids.o_Channel.queue_declare(queue='', exclusive=True).method.queue
+    # Bind the channel's queue to the exchange
+    o_Rabids.o_Channel.queue_bind(exchange='logs', queue=s_QueueName)
+    print("Waiting for logs...")
+    o_Rabids.basicConsume(
+        s_Queue=s_QueueName,
+        F_Callback= lambda x: x = x,
+        b_AutoAck=True
+    )
+    # Start consuming
+    o_Rabids.o_Channel.start_consuming()
+\end{verbatim}
+
+Notice that now, instead of binding the consumer directly to a queue, it is attached to an exchange and then after we declare the exchange we instead allow the queue to be declared randomly (by giving queue declare a blank queue) which we then bind to the exchange.
+
+Now, we can open two log consumers, and pipe one to an output file to both see the logs from one consumer and save them with another.
+
+\subsubsection{Conclusion}
+
+Here we have shown the value of exchanges, changed our approach to not publish directly to queues. and ensure that we can send messages to multiple consumers at the same time.
 
 \end{document}
