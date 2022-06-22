@@ -22,3 +22,6 @@ RabidsMQ is a RabbitMQ wrapper that I wrote to prevent the reusage of boilerplat
 2. Task Queue
     - Creating a task queue for task load balancing via messaging
     - Exploring queue and message acknowledgement and durability to ensure tasks are completed and handled correctly.
+3. Publish/Subscribe
+    - Sending messages to many consumers at once
+    - Learning the value of exchanges and how queues interact with them
