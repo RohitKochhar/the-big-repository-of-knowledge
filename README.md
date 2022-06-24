@@ -25,3 +25,6 @@ RabidsMQ is a RabbitMQ wrapper that I wrote to prevent the reusage of boilerplat
 3. Publish/Subscribe
     - Sending messages to many consumers at once
     - Learning the value of exchanges and how queues interact with them
+4. Routing
+    - Sending messages to specific nodes via topics and routing keys
+    - Filtering messages sent to specific nodes via routing keys.
