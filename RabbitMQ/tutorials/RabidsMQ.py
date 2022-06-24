@@ -56,9 +56,9 @@ class RabidsMQ:
         )
 
         if s_Exchange == '':
-            print(f'[SENT >>>] Sent message "{s_Body}" to queue: {s_RoutingKey}')
+            print(f'[SENT >>>] Sent message "{s_Body}" with routing key: {s_RoutingKey}')
         else:
-            print(f'[SENT >>>] Sent message "{s_Body}" to queue: {s_RoutingKey} via {s_Exchange}')
+            print(f'[SENT >>>] Sent message "{s_Body}" with routing key: {s_RoutingKey} via {s_Exchange}')
 
     # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
     #
