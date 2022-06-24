@@ -417,4 +417,90 @@ Now, we can open two log consumers, and pipe one to an output file to both see t
 
 Here we have shown the value of exchanges, changed our approach to not publish directly to queues. and ensure that we can send messages to multiple consumers at the same time.
 
+\subsection{Routing}
+
+\textit{Source code located at}: \verb|the-big-repository-of-knowledge/RabbitMQ/tutorials/routing/|
+
+\subsubsection{Introduction}
+
+Last tutorial, we created a logging system that could broadcast messages from a single client to many receivers via exchanges rather than queues. 
+
+The problem with the system implemented in the last tutorial is that every subscribed client received every message published to the exchange. Imagine if over a distributed system every client received every message published, it would be a mess! 
+
+Now, we are going to add functionality so that clients can subscribe to only receive a subset of the messages.
+
+The files in this section are largely the same as the files in \textit{tutorial 3: Publish / Subscribe}, so we will focus more on the difference between the two files, with the complete source code for this file located in the GitHub repository.
+
+\subsubsection{Bindings}
+
+In the last section, we used bindings to connect an exchange to a queue, but we omitted a \verb|routing_key| parameter. This parameter can be used to specify the \textit{topic} of messages being routed through the exchange to the queue.
+
+For example:
+
+\begin{verbatim}
+    o_Rabids.o_Channel.queue_bind(
+        exchange    = "Basic Exchange",
+        queue       = "Basic Queue",
+        routing_key = "Logs"
+    )
+\end{verbatim}
+
+This code will bind the exchange "Basic Exchange" to the queue "Basic Queue", and it will \textit{basically} tag all messages sent from Basic Exchange to Basic Queue as "Logs". This way, the clients that are interested in logs can handle them as they wish, and ones that are not interested can ignore them completely.
+
+\subsubsection{Direct Exchange}
+
+Now that we can tag messages with a topic, we want to be able to filter messages based on their tags. 
+
+To fix this, we need to change our exchange type, since we were previously using \verb|fanout|, which is only capable of mindless broadcasting from an exchange to multiple queues.
+
+We could instead use a \verb|direct| exchange which forwards messages with a routing key that matches that of the queues binding key.
+
+It is important to note that we can have more than one routing key attached to a queue's binding key, that is, queues can have multiple bindings.
+
+Even further, exchanges can bind multiple routing keys to different queues, that is, two queues can receive messages of the same topics.
+
+\subsubsection{Log Emitter}
+
+The main differences in this log emitter and the one from tutorial 3 can be seen below:
+
+\begin{verbatim}
+    s_Severity = ' '.join(sys.argv[2]) or "LOW"
+    # Declare the exchange
+    o_Rabids.o_Channel.exchange_declare(
+        exchange='direct_logs', 
+        exchange_type='direct' =
+    )
+    # Publish to the exchange
+    o_Rabids.basicPublish(
+        s_Exchange      = 'direct_logs',
+        s_RoutingKey    = s_Severity,
+        s_Body          = s_Message
+    )
+\end{verbatim}
+
+Notice that we are now defining a routing key from the command line arguments, and sending the messages depending on the provided argument.
+
+\subsubsection{Log Consumer}
+
+
+The main differences between this file and the previous \verb|log_consumer| from tutorial 3 can be seen below:
+
+\begin{verbatim}
+    o_Rabids.o_Channel.exchange_declare(exchange='direct_logs', exchange_type='direct')
+    # Store the resulting queue name
+    s_QueueName = o_Rabids.o_Channel.queue_declare(queue='', exclusive=True).method.queue
+    # Bind the channel's queue to the exchange depending on severites
+    a_Severities = sys.argv[1:]
+    for s_Severity in a_Severities:
+        o_Rabids.o_Channel.queue_bind(exchange='direct_logs', queue=s_QueueName, routing_key=s_Severity)
+\end{verbatim}
+
+Like we parsed the severity of the message in the log emitter, here we are specifying the topic that the client is listening for. Depending on the severity we provide the client, we bind the queue to each severity. Note this part is very similar to the last tutorial, with the main difference being that we perform multiple queue binds.
+
+\subsubsection{Conclusion}
+
+We can demo this by opening 3 programs, one producer and 2 consumers. The consumers should be specified with \verb|python3 log_consumer.py HIGH| and \verb|python3 log_consumer.py LOW MED|. Now, we can run producers with \verb|python3 log_emitter {LOG_MESSAGE} {SEVERITY}|. If we specify severity to be \verb|LOW| or \verb|MED|, it will go to the second consumer, and if we specify it to be \verb|HIGH|, it will go to the first. Any other severities will not be processed by the consumer nodes. 
+
+Here we have learned how to filter and route messages depending on their topics, and how this can be used to ensure only interested clients receive important messages they care about.
+
 \end{document}
