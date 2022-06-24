@@ -4,10 +4,10 @@ A repository full of various tutorials and references for different development 
 The goal here is to learn 1 new tool per week. 
 
 ## Timeline
-|   Topic   |    Start Date    |    End Date     |
-| --------- | ---------------- | --------------- |
-| Influx DB | June 26th, 2022  | July 2nd, 2022  |
-| RabbitMQ  | June 19th, 2022  | June 25th, 2022 |
+|   Topic   |    Start Date    |    End Date     |   Progress   |
+| --------- | ---------------- | --------------- | ------------ |
+| Influx DB | June 26th, 2022  | July 2nd, 2022  |     To-Do    |
+| RabbitMQ  | June 19th, 2022  | June 25th, 2022 |  In-Progress |
 
 ## Sections
 
@@ -31,3 +31,5 @@ RabidsMQ is a RabbitMQ wrapper that I wrote to prevent the reusage of boilerplat
 4. Routing
     - Sending messages to specific nodes via topics and routing keys
     - Filtering messages sent to specific nodes via routing keys.
+5. Topics
+    - Extend Routing tutorial to be able to create complex topics to allow filtering by many criteria.
