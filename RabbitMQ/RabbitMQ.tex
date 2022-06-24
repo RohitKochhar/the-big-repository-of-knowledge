@@ -503,4 +503,90 @@ We can demo this by opening 3 programs, one producer and 2 consumers. The consum
 
 Here we have learned how to filter and route messages depending on their topics, and how this can be used to ensure only interested clients receive important messages they care about.
 
+\subsection{Topics}
+
+\textit{Source code located at}: \verb|the-big-repository-of-knowledge/RabbitMQ/tutorials/topics/|
+
+\subsubsection{Introduction}
+
+Last tutorial, we used a direct exchange to allow for routing and filtering based on topics. This still has some limitations, mainly that \verb|direct| only allows for a message to have a single topic. This is not ideal, as we often want to route messages to a specific client based on multiple criteria.
+
+\subsubsection{Topic Exchange}
+
+Instead of using a \verb|fanout| or \verb|direct| exchange, we are going to use a \verb|topic| exchange.
+
+Messages sent to a topic exchange must not have arbitrary routing keys, but instead a list of word delimited by dots: \verb|car.sensors.imu.acceleration.lateral|.
+
+The binding key of a queue must be in the same form, so a client that wants all car data will subscribe to a queue with binding key \verb|car.#|, and another client that just wants acceleration data will subscribe to a queue with binding key \verb|car.sensors.imu.acceleration.*|
+
+In this example, we are going to send messages that describe F1 car telemetry. There are two queues with 3 bindings:
+
+\begin{itemize}
+    \item Queue 1 is interested in engine health (\verb|car.engine.#|)
+    \item Queue 2 is interested in tyre degradation and hydraulics (\verb|car.tyre.*.degradation| and \verb|car.hydraulics.#|)
+\end{itemize}
+
+Once again, the code here is quite similar to the previous tutorial, so we will focus on the discussion of the differences only.
+
+\subsubsection{Data Emitter}
+
+The main differences between this data emitter and the log emitter from the last tutorial can be seen below:
+
+\begin{verbatim}
+    s_Message   = (sys.argv[1]) or "Empty Data"
+    s_Topic     = (sys.argv[2]) or "anonymous.data"
+    # Declare the exchange
+    o_Rabids.o_Channel.exchange_declare(
+        exchange='topic_logs', 
+        exchange_type='topic'
+    )
+    # Publish to the exchange
+    o_Rabids.basicPublish(
+        s_Exchange      = 'topic_logs',
+        s_RoutingKey    = s_Topic,
+        s_Body          = s_Message
+    )
+\end{verbatim}
+
+Notice that all we have done different is change the exchange name and the type, and assign a more complex routing key to the publish function than earlier.
+
+\subsubsection{Data consumer}
+
+The main differences between this consumer and the consumer from the last tutorial can be seen below:
+
+\begin{verbatim}
+    o_Rabids.o_Channel.exchange_declare(exchange='topic_logs', exchange_type='topic')
+    # Store the resulting queue name
+    s_QueueName = o_Rabids.o_Channel.queue_declare(queue='', exclusive=True).method.queue
+    # Bind the channel's queue to the exchange depending on severites
+    a_Topics = sys.argv[1:]
+    for s_Topic in a_Topics:
+        o_Rabids.o_Channel.queue_bind(exchange='topic_logs', queue=s_QueueName, routing_key=s_Topic)
+    # Wait for logs
+\end{verbatim}
+
+Similarly to the emitter, all we do is change the routing keys to more complex topics and change the exchange declare.
+
+\subsubsection{Conclusion}
+
+Now we can test our system by running 3 programs. One producer publishing to different topics from the command line. For example: 
+
+\verb|python3 data_emitter.py 5% car.tyres.1.degradation|
+
+or 
+
+\verb|python3 data_emitter.py GOOD car.engine.ICE)|
+
+Then we can start two consumers:
+
+\verb|python3 data_consumer.py "car.tyres.*.degradation" "car.hydraulics.#"|
+
+and
+
+\verb|python3 data_consumer.py "car.engine.#"|
+
+Whenever we trigger our emitters, depending on the topic we declare to each message we will see the message sent to only the client interested, even if we fill the wildcards (* and \#) with whatever we want.
+
+Here we have seen how to create more complex topics as routing keys to allow for more refined routing and filtering.
+
 \end{document}
