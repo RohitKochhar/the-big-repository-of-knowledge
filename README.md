@@ -6,8 +6,8 @@ The goal here is to learn 1 new tool per week.
 ## Timeline
 |   Topic   |    Start Date    |    End Date     |   Progress   |
 | --------- | ---------------- | --------------- | ------------ |
-| Influx DB | June 26th, 2022  | July 2nd, 2022  |     To-Do    |
-| RabbitMQ  | June 19th, 2022  | June 25th, 2022 |  In-Progress |
+| Influx DB | June 26th, 2022  | July 2nd, 2022  |  In-Progress |
+| RabbitMQ  | June 19th, 2022  | June 25th, 2022 |     Done     |
 
 ## Sections
 
