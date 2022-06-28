@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb2:/var/lib/influxdb2:rw
+    environment:
+      - DOCKER_INFLUXDB_INIT_USERNAME=dbuser
+      - DOCKER_INFLUXDB_INIT_PASSWORD=dbpassword
+      - DOCKER_INFLUXDB_INIT_ORG=none
+      - DOCKER_INFLUXDB_INIT_BUCKET=none
+      - INFLUXDB_HTTP_AUTH_ENABLED="true"

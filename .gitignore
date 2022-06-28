@@ -1,1 +1,3 @@
 **/__pycache__/*
+InfluxDB/influxdb-data/*
+InfluxDB/influxdb2/*
