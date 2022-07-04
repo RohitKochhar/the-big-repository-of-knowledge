@@ -13,12 +13,14 @@ The goal here is to learn 1 new tool per week.
 
 ### Influx DB
 
-Notes are in `InfluxDB/
+Notes are in `InfluxDB/InfluxDB.tex`
 
 
 ### RabbitMQ
 
-Notes are in `RabbitMQ/RabbitMQ.tex`
+LaTeX notes are in `RabbitMQ/RabbitMQ.tex`
+
+PDF notes are in `RabbitMQ/RabbitMQNotes.pdf`
 
 #### RabidsMQ
 
