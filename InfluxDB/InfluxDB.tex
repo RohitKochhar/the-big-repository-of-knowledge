@@ -1,0 +1,105 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{float}
+
+\title{InfluxDB}
+\author{Rohit Singh}
+\date{June 26th - July 2nd, 2022}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Overview}
+
+\subsection{What is InfluxDB}
+
+\subsubsection{Influxdata for timeseries development}
+
+InfluxDB is created by \textbf{influxdata}, who also create \textbf{Telegraf} and \textbf{Flux}. These threee products create a hollistic development platform, used for IoT applications, financial applications and more. InfluxDB is the leading timeseries database engine. Flux is a functional scripting and querying language and Telegraf is the leading metrics collector for timeseries data. 
+
+Using these three products, we can store timeseries data in a InfluxDB database, query data with Flux and aggregate metrics with Telegraf.
+
+\section{Getting Started}\label{ref:getting-started}
+
+For the purposes of this chapter, we will use Docker and Docker Compose to create local InfluxDB instances.
+
+\subsection{Docker}
+
+If we just need a quick instance up and running, we don't need to use the preconfigured \verb|docker-compose.yaml| file, and we can instead run using Docker on the command-line, we use the following command:
+
+\begin{verbatim}
+    $ docker run -p 8086:8086 \
+      -v $PWD:/var/lib/influxdb2 \
+      influxdb:2.0
+\end{verbatim}
+
+Note that this will prompt us for a initial user, password and storage information every time, whereas with the docker compose creation, as explained in section \ref{docker-compose}, our configuration is saved as IaC (infrastructure as code), allowing for a more easily repeatable and consistent creation process.
+
+\subsection{Docker Compose}\label{docker-compose}
+
+The sample image creation using Docker Compose is shown in \verb|./InfluxDB/docker-compose.yaml|. Although the file is subject to variation, on a high-level it looks like this:
+
+\begin{verbatim}
+version: "3.9"
+
+services:
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./influxdb2:/var/lib/influxdb2:rw
+    environment:
+      - DOCKER_INFLUXDB_INIT_USERNAME=root
+      - DOCKER_INFLUXDB_INIT_PASSWORD=rootpassword
+      - DOCKER_INFLUXDB_INIT_ORG=init_org
+      - DOCKER_INFLUXDB_INIT_BUCKET=init_bucket
+      - INFLUXDB_HTTP_AUTH_ENABLED="true"
+\end{verbatim}
+
+The key takeaways are that we expose the service on port 8086, which lets us view the dashboard by navigating to \verb|localhost:8086|. We create a shared volume between our local machine and the image, located in the directory where the \verb|docker-compose up| command is run. 
+
+We initialize the database with a simple pair of root user credentials, and we create an initial bucket and organization (described in sections \ref{ref:bucket} and \ref{ref:organization}, respectively)
+
+Before running any programs that depend on InfluxDB, ensure that you've run either the docker-compose or docker command and can log in at the UI via \verb|localhost:8086|.
+
+\subsection{API Keys}
+
+To authorize clients, we need API keys. To retreive an API key, go to \verb|localhost:8086| and log-in. Once logged in, from the navigation tool bar > data explorer > API Keys. Copy the resulting key and save it as an environment variable (recommended) or in the file as a string.
+
+While it is recommended to not expose secrets in code files, we make the exception here for simplicity.
+
+\section{Tutorials}
+
+In this section, we go through some ways to access the influx database using its Python client.
+
+\subsection{Simple Write}
+
+The source code for this tutorial can be found at \\ \verb|the-big-repository-of-knowledge/InfluxDB/tutorials/simpleWrite.py|
+
+\subsubsection{Introduction}
+
+In this tutorial, we are creating a simple program to simulate a temperature reading and write the result to our InfluxDB instance located at \verb|localhost:8086| (this assumes you have created an instance as outlined in section \ref{ref:getting-started})
+
+\section{Dictionary}
+
+\subsection{Buckets}\label{ref:bucket}
+
+\textbf{Buckets} are named locations where the time series data is stored.
+
+Buckets have an associated \textit{retention period} which specifies the duration that each data point should persist. Once a data points timestamp becomes older than the retention period, InfluxDB drops the point.
+
+Each bucket belongs to an \textit{organization}, which is discussed in section \ref{ref:organization}
+
+\subsection{Organization}\label{ref:organization}
+
+\textbf{Organizations} are workspaces for groups of users. All dashboards, tasks, buckets, members, etc., belong to an organization
+
+
+\end{document}
