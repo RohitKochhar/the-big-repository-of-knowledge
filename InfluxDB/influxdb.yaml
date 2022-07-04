@@ -18,6 +18,8 @@ spec:
         - name: influxdb
           image: influxdb:latest
           env:
+          # - name: DOCKER_INFLUXDB_INIT_MODE
+          #   value: "upgrade"
           - name: DOCKER_INFLUXDB_INIT_USERNAME
             value: "dbuser"
           - name: DOCKER_INFLUXDB_INIT_PASSWORD
@@ -32,13 +34,21 @@ spec:
           - containerPort: 8086
 
           volumeMounts:
-            - mountPath: "/var/lib/influxdb2"
-              name: influxdb-data-storage
+          - mountPath: "/var/lib/influxdb2"
+            name: influxdb-data
 
       volumes:
-        - name: influxdb-data-storage
-          persistentVolumeClaim:
-            claimName: influxdb-data
+      - name: influxdb-data
+        emptyDir: {}
+
+      #     volumeMounts:
+      #       - mountPath: "/var/lib/influxdb2"
+      #         name: influxdb-data-storage
+
+      # volumes:
+      #   - name: influxdb-data-storage
+      #     persistentVolumeClaim:
+      #       claimName: influxdb-data
 ---
 
 apiVersion: v1
@@ -51,35 +61,35 @@ spec:
     app: influxdb
   ports:
     - port: 8086
-      targetPort: 8086
+      nodePort: 30080
 
 ---
 
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: influxdb-data
-  labels:
-    type: local
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  hostPath:
-    path: "/mnt/data"
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: influxdb-data
+#   labels:
+#     type: local
+# spec:
+#   storageClassName: manual
+#   capacity:
+#     storage: 1Gi
+#   accessModes:
+#     - ReadWriteOnce
+#   hostPath:
+#     path: "./influxdb-data"
 
----
+# ---
 
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: influxdb-data-claim
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: influxdb-data-claim
+# spec:
+#   storageClassName: manual
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 1Gi

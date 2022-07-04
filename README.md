@@ -4,12 +4,17 @@ A repository full of various tutorials and references for different development 
 The goal here is to learn 1 new tool per week. 
 
 ## Timeline
-|   Topic   |    Start Date    |    End Date     |   Progress   |
-| --------- | ---------------- | --------------- | ------------ |
-| Influx DB | June 26th, 2022  | July 2nd, 2022  |  In-Progress |
-| RabbitMQ  | June 19th, 2022  | June 25th, 2022 |     Done     |
+|   Topic   |    Start Date    |    End Date     |   Progress   |  Notes |
+| --------- | ---------------- | --------------- | ------------ | ------ |
+| Influx DB | June 26th, 2022  | July 9th, 2022  |  In-Progress | Delayed by a week due to school |
+| RabbitMQ  | June 19th, 2022  | June 25th, 2022 |     Done     |        |
 
 ## Sections
+
+### Influx DB
+
+Notes are in `InfluxDB/
+
 
 ### RabbitMQ
 
