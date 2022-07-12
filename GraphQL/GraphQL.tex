@@ -1,0 +1,281 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{float}
+
+\title{GraphQL}
+\author{Rohit Singh}
+\date{July 11th - 18th, 2022}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Overview}
+
+\subsection{What is GraphQL}
+
+GraphQL is a \textit{query language} used for APIs, as well as a server-side runtime for executing queries using a customizable type system.
+
+\subsection{What isn't GraphQL}
+
+GraphQL is \textbf{not} a specific database querying language, or storage engine, and it is instead backed by user-defined code and data.
+
+\subsection{How does it work?}
+
+GraphQL relies on a service/query model (discussed in sections \ref{glossary:service} and \ref{glossary:query}, respectively) to allow users to query information from a service typically hosted at a URL endpoint (like most APIs). With GraphQL, there is additional flexibility of the data type system that can be highly customizable and defined by the developer on the service side to create much more highly flexible APIs.
+
+\section{Tutorials}
+
+For the GraphQL tutorials, I'm going to mix it up and use Go instead of Python. This is purely to become more comfortable with Go and take a break almost exclusively using Python.
+
+\section{Glossary}
+
+Below is a collection of commonly used terms in this documentation that may need elaboration
+
+\subsection{GraphQL Service}\label{glossary:service}
+
+A GraphQL service is a sort of function that takes an query input and returns the information the user is requesting.
+
+A GraphQL service typically runs at a URL on a web service, similarly to how many APIs exist at various endpoints of an app accessed through URLs.
+
+A GraphQL service will first check a query to ensure that the query information is well-defined (that is, it is requesting information that has been defined by the user previously). 
+
+\subsection{GraphQL Query}\label{glossary:query}
+
+A GraphQL query is a request provided to a GraphQL service (discussed in section \ref{glossary:service}) to request data.
+
+For example, a query could be:
+
+\begin{verbatim}
+    {
+        me {
+            name
+        }
+    }
+\end{verbatim}
+
+Which (depending on the implementation on the server-side) could result in a JSON response of:
+
+\begin{verbatim}
+    {
+        "me": {
+            "name": "Rohit Singh"
+        }
+    }
+\end{verbatim}
+
+\subsubsection{Fields}
+
+Queries consist of various fields. For example, consider the following query:
+
+\begin{verbatim}
+    {
+        team {
+            name
+            drivers {
+                name
+            }
+        }
+    }
+\end{verbatim}
+
+Which would return the following JSON:
+
+\begin{verbatim}
+    {
+        "data": {
+            "team": {
+                "name": "Mercedes-AMG Petronas Formula 1",
+                "drivers": [
+                    {
+                        name: "Lewis Hamilton"
+                    },
+                    {
+                        name: "George Russell"
+                    },
+                ]
+            }
+        }
+    }
+\end{verbatim}
+
+It is \textbf{very important} to note that the structure of the \verb|data| is the exact same as the structure of the query. This is essential to GraphQL since it ensures that we always get back what we expect, and the server knows explicitly what we want.
+
+Notice that in our JSON result, \verb|name| returns a string, namely "Mercedes-AMG Petronas Formula 1". However, returned fields can also refer to Objects, which is shown by \verb|drivers|. In the case where the returned field refers to an Object, we can make a sub-selection of fields for that object, which is what we are doing when we specify \verb|name| within the \verb|drivers| query. This is why we have a resulting array of drivers' names.
+
+\subsubsection{Query Arguments}
+
+As interesting as the fields are in GraphQL, we have even more power and flexiblility when we incorporate query arguments. 
+
+Suppose we have a larger dataset, perhaps 20 different drivers, but we want to find a specific one based on their car number. Without arguments, we could run the following query:
+
+\begin{verbatim}
+    {
+        driver {
+            name
+            number
+        }
+    }
+\end{verbatim}
+
+However, this would output an array of 20 objects, and would require us to either manually find the correct number and matching name, or parse it via a script.
+
+Instead, we can use \textbf{querying arguments} to run the following query:
+
+\begin{verbatim}
+    {
+        driver(number: 55) {
+            name
+            height(unit: METER)
+        }
+    }
+\end{verbatim}
+
+Which would return the following JSON result:
+
+\begin{verbatim}
+    {
+        "data": {
+            "driver": {
+                "name": "Carlos Sainz",
+                "height": 1.78
+            }
+        }
+    }
+\end{verbatim}
+
+Other API systems, such as REST, only allow one argument to be passed, but in GraphQL, every field and its nested objects can get their own sets of arguments, eliminating the need for multiple API calls. This is shown above by the use of an enumerator \verb|METER| to specify the unit type we are looking for.
+
+\subsubsection{Aliases}
+
+Suppose we wanted to query more than one driver based on their number. With the above approach, we would need to do two queries, one to set the first result and another to set the second.
+
+By using \textbf{aliases}, we can associate a name or label with the result of each query. This allows us to make multiple queries within a single request and save the data with a more descriptive label than \verb|driver| as shown above.
+
+We add aliases directly within the query as shown below:
+
+\begin{verbatim}
+--- Query:
+    {
+        carNumber55: driver(number: 55) {
+            name
+        }
+        carNumber10: driver(number: 10){
+            name
+        }
+    }
+--- Result:
+    {
+        "data": {
+            "carNumber55": {
+                "name": "Carlos Sainz"
+            },
+            "carNumber10": {
+                "name": "Pierre Gasly"
+            }
+        }
+    }
+\end{verbatim}
+
+Without aliases, the two \verb|driver| queries would have collided, but with aliases we can fetch them both in a single request.
+
+\subsubsection{Fragments}
+
+Suppose we wanted to create biography pages for our drivers that showed their name, age, nationality, team name and team mate name. We could imagine how to make such a query in GraphQL:
+
+\begin{verbatim}
+--- Query:
+    {
+        driver {
+            name
+            age
+            nationality
+            team {
+                name
+            }
+            teammate {
+                name
+            }
+        }
+    }
+--- Result:
+    {
+        "data": {
+            "driver": {
+                "name": "Valterri Bottas",
+                "age": 32,
+                "nationality": "Finland",
+                "team": {
+                    "name": "Alfa Romeo Orlen"
+                }
+                "teammate": {
+                    "name": "Guanyu Zhou"
+                }
+            }
+        }
+    }
+\end{verbatim}
+
+Now, imagine that we want to compare biographies on the same page. We could simply copy and paste the original query for another driver, but that isn't how we do things in other languages, instead we define reuseable functions! In GraphQL, we use \textbf{Fragments}, which would let us do a comparison between two drivers as shown below:
+
+\begin{verbatim}
+--- Query:
+    {
+        driver1: driver(name: "Fernando Alonso") {
+            ...driverBiography
+        }
+        driver2: driver(name: "Sebastian Vettel") {
+            ...driverBiography
+        }
+    }
+    
+    fragment driverBiography on driver {
+        name
+        age
+        nationality
+        team {
+            name
+        }
+        teammate {
+            name
+        }
+    }
+--- Result:
+    {
+        "data": {
+            "driver1": {
+                "name": "Fernando Alonso",
+                "age": 40,
+                "nationality": "Spain",
+                "team": {
+                    "name": "Alpine F1 Team"
+                }
+                "teammate": {
+                    "name": "Esteban Ocon"
+                }
+            },
+            "driver2": {
+                "name": "Sebastian Vettel",
+                "age": 35,
+                "nationality": "Germany",
+                "team": {
+                    "name": "Aston Martin Aramco Cognizant F1 Team"
+                }
+                "teammate": {
+                    "name": "Lance Stroll"
+                }
+            }
+        }
+    }
+\end{verbatim}
+
+It is clear how much repetition we save by defining a reusable fragment.
+
+\subsection{Variables}
+
+\end{document}
