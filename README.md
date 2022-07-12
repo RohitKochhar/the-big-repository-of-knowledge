@@ -6,15 +6,23 @@ The goal here is to learn 1 new tool per week.
 ## Timeline
 |   Topic   |    Start Date    |    End Date     |   Progress   |  Notes |
 | --------- | ---------------- | --------------- | ------------ | ------ |
-| Influx DB | June 26th, 2022  | July 9th, 2022  |  In-Progress | Delayed by a week due to school |
+| GraphQL   | July 11th, 2022  | July 18th       |  In-Progress |        | 
+| Influx DB | June 26th, 2022  | July 9th, 2022  |     Done     | Delayed by a week due to school |
 | RabbitMQ  | June 19th, 2022  | June 25th, 2022 |     Done     |        |
 
 ## Sections
+
+### GraphQL
+
+Notes are in `GraphQL/GraphQL/tex`
 
 ### Influx DB
 
 Notes are in `InfluxDB/InfluxDB.tex`
 
+This was pretty short, mostly just setting up a database using Docker and then simple querying via reads and writes.
+
+Might pick this up again at a later date if I feel like there's more I need to learn on this, but moving onto `GraphQL` for the time being to stay motivated and on track.
 
 ### RabbitMQ
 
