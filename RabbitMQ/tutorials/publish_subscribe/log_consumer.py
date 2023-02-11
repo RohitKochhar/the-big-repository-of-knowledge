@@ -24,7 +24,7 @@ if __name__ == '__main__':
     print('Running log_consumer')
     try:
         # Define Rabids MQ instance
-        o_Rabids = RabidsMQ(s_Host='localhost')
+        o_Rabids = RabidsMQ(s_Host='18.117.132.74')
         # Open channel 
         o_Rabids.openChannel()
         # Declare exchange

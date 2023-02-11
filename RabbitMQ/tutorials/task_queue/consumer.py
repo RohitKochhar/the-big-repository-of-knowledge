@@ -50,7 +50,7 @@ def callback(ch, method, properties, data):
 if __name__ == '__main__':
     try:
         # Create RabidsMQ instance
-        o_RabidsMQ      = RabidsMQ(s_Host='localhost')
+        o_RabidsMQ      = RabidsMQ(s_Host='18.117.132.74')
         o_RabidsMQ.openChannel()
         o_RabidsMQ.o_Channel.queue_declare(queue='task_queue', durable=True)
         o_RabidsMQ.o_Channel.basic_qos(prefetch_count=1)

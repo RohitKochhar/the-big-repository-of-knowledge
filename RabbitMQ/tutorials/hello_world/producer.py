@@ -23,7 +23,7 @@ from RabidsMQ import RabidsMQ
 # Main Call ------------------------------------------------------
 if __name__ == '__main__':
     # Open Connection Channel
-    o_RabidsMQ      = RabidsMQ(s_Host='localhost')
+    o_RabidsMQ      = RabidsMQ(s_Host='18.118.129.94')
     o_RabidsMQ.openChannel()
     o_RabidsMQ.o_Channel.queue_declare(queue='hello')
     o_RabidsMQ.basicPublish(

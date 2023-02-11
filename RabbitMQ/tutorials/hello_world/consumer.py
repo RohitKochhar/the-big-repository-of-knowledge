@@ -35,7 +35,7 @@ from RabidsMQ import RabidsMQ
 # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
 def main():
     # Create RabidsMQ instance
-    o_RabidsMQ      = RabidsMQ(s_Host='localhost')
+    o_RabidsMQ      = RabidsMQ(s_Host='18.118.129.94')
     # Open connection
     o_RabidsMQ.openChannel()
     # Declare queue
